@@ -1,0 +1,15 @@
+# Downloaded geographic data and DEM tiles, not website assets.
+/output/source/
+/output/logs/
+/output/world-generation.lock
+/output/world-generation-report.json
+/output/*.tmp
+/output/legacy-public-maps/
+/output/legacy-code/
+
+# React dependencies and generated app copies/builds.
+/node_modules/
+/dist/
+/public/maps/
+/public/data/
+/data/city-catalog.json
