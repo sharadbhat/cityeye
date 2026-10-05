@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>City layer preview</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #151b18; color: #eff4ed; }
+      main { width: min(100%, 980px); padding: 24px; }
+      h1 { margin: 0 0 6px; font-size: 1.25rem; }
+      p { margin: 0 0 18px; color: #b9c8bd; }
+      .city-control { display: flex; align-items: center; gap: 12px; margin: 20px 0 16px; }
+      select { max-width: 100%; padding: 9px 36px 9px 12px; border: 1px solid #55665a; border-radius: 8px; background: #202a23; color: inherit; font: inherit; }
+      nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+      button { border: 1px solid #55665a; border-radius: 999px; padding: 8px 13px; background: #202a23; color: inherit; cursor: pointer; font: inherit; font-size: .9rem; }
+      button:hover, button[aria-pressed="true"] { background: #d3e7b8; border-color: #d3e7b8; color: #172017; }
+      button:disabled { opacity: .5; cursor: wait; }
+      button:focus-visible, select:focus-visible { outline: 2px solid #d3e7b8; outline-offset: 3px; }
+      #status { min-height: 1.25em; margin: 0 0 12px; font-size: .85rem; }
+      #status[data-error="true"] { color: #f6a49e; }
+      #map { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 14px; background: #f4f3ea; box-shadow: 0 16px 48px #0008; }
+      #map-surface { position: absolute; inset: 0; transform-origin: 0 0; }
+      #map svg { display: block; width: 100%; height: 100%; }
+      #map [data-reveal-stage] { opacity: 0; visibility: hidden; transition: opacity 450ms ease, visibility 0s linear 450ms; }
+      #map [data-reveal-stage].visible { opacity: 1; visibility: visible; transition-delay: 0s; }
+      #map.instant [data-reveal-stage] { transition: none; }
+
+      /* Geometry stays unstyled in each SVG. This page supplies the preview theme. */
+      #map .road { fill: none; stroke-linecap: butt; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+      #map .road--local { stroke: #8e9c94; stroke-width: 1; }
+      #map .road--arterial { stroke: #64796c; stroke-width: 1.8; }
+      #map .road--motorway { stroke: #354f41; stroke-width: 2.8; }
+      #map .rail { fill: none; stroke: #85979a; stroke-width: 1; stroke-linecap: butt; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+      #map .transit { fill: none; stroke: #b94d46; stroke-width: 1.8; stroke-linecap: butt; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+      #map .park { fill: #b9d3a7; stroke: #91ad83; stroke-width: .55; opacity: .78; }
+      #map .water-area { fill: #9bc8df; stroke: #6dabc9; stroke-width: .65; opacity: .85; }
+      #map .water-line { fill: none; stroke: #67aaca; stroke-width: 1.35; stroke-linecap: round; opacity: .9; }
+      #map .elevation-band { fill: var(--elevation-color, #fff); opacity: 1; }
+      #map .contour { fill: none; stroke: #718174; stroke-width: .75; opacity: .65; }
+      #map .country-clue { fill: #172017; font: 700 20px/1 Inter, sans-serif; letter-spacing: .12em; }
+      footer { margin-top: 14px; color: #98aa9d; font-size: .75rem; }
+      footer a { color: inherit; }
+      @media (max-width: 540px) { main { padding: 16px; } .city-control { align-items: stretch; flex-direction: column; gap: 6px; } }
+      @media (prefers-reduced-motion: reduce) { #map [data-reveal-stage] { transition: none; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>City layer preview</h1>
+      <p>Choose a city, then reveal its map one stage at a time.</p>
+      <div class="city-control">
+        <label for="city">City</label>
+        <select id="city" aria-controls="map">
+          <!-- CITY_OPTIONS -->
+        </select>
+      </div>
+      <nav aria-label="Map reveal stage">
+        <button data-stage="1" aria-pressed="true" disabled>Stage 1 · Streets</button>
+        <button data-stage="2" aria-pressed="false" disabled>Stage 2 · Parks &amp; transit</button>
+        <button data-stage="3" aria-pressed="false" disabled>Stage 3 · Water</button>
+        <button data-stage="4" aria-pressed="false" disabled>Stage 4 · Regional</button>
+        <button data-stage="5" aria-pressed="false" disabled>Stage 5 · Country</button>
+      </nav>
+      <p id="status" role="status" aria-live="polite">Loading map…</p>
+      <div id="map" aria-label="Progressively revealed city map" aria-busy="true"><div id="map-surface"></div></div>
+      <footer>Map data: <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> via <a href="https://overturemaps.org/">Overture Maps</a>. Elevation: USGS.<span id="additional-sources"></span></footer>
+      <noscript><p>This preview needs JavaScript enabled to reveal the embedded maps.</p></noscript>
+    </main>
+    <!-- Embedded SVGs allow this page to open directly from disk without a local server. -->
+    <!-- CITY_GEOMETRY -->
+    <script>
+      (() => {
+        const map = document.querySelector('#map');
+        const surface = document.querySelector('#map-surface');
+        const selector = document.querySelector('#city');
+        const status = document.querySelector('#status');
+        const additionalSources = document.querySelector('#additional-sources');
+        const buttons = [...document.querySelectorAll('button[data-stage]')];
+        const templates = new Map([...document.querySelectorAll('template[data-city]')].map((template) => [template.dataset.city, template]));
+        const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+        let svg = null;
+        let config = null;
+        let stage = 1;
+        let motion = null;
+        let request = 0;
+
+        const validCamera = (camera) => Array.isArray(camera) && camera.length === 4 && camera.every(Number.isFinite) && camera[2] > 0 && camera[3] > 0;
+        const sameCamera = (first, second) => validCamera(first) && validCamera(second) && first.every((value, index) => Math.abs(value - second[index]) < 1e-7);
+        const setCamera = (camera) => {
+          const previous = svg.getAttribute('viewBox').trim().split(/[\s,]+/).map(Number);
+          if (!sameCamera(previous, camera)) svg.setAttribute('viewBox', camera.join(' '));
+        };
+
+        function cameraTransform(sourceCamera, targetCamera) {
+          if (!validCamera(sourceCamera) || !validCamera(targetCamera)) throw new Error('Invalid camera bounds.');
+          return {
+            scaleX: targetCamera[2] / sourceCamera[2],
+            scaleY: targetCamera[3] / sourceCamera[3],
+            translateXPercent: (targetCamera[0] - sourceCamera[0]) / sourceCamera[2] * 100,
+            translateYPercent: (targetCamera[1] - sourceCamera[1]) / sourceCamera[3] * 100,
+          };
+        }
+
+        const currentCamera = () => {
+          if (!svg) return null;
+          if (!motion) return svg.getAttribute('viewBox').trim().split(/[\s,]+/).map(Number);
+          const progress = motion.animation.playState === 'finished' ? 1 : motion.animation.effect.getComputedTiming().progress ?? 0;
+          const amount = Math.max(0, Math.min(1, progress));
+          const interpolate = (key) => motion.first[key] + (motion.last[key] - motion.first[key]) * amount;
+          const width = motion.render[2] / interpolate('scaleX');
+          const height = motion.render[3] / interpolate('scaleY');
+          return [
+            motion.render[0] - interpolate('translateXPercent') / 100 * width,
+            motion.render[1] - interpolate('translateYPercent') / 100 * height,
+            width, height,
+          ];
+        };
+
+        const cancelZoom = () => {
+          if (motion) {
+            const previous = motion;
+            motion = null;
+            previous.animation.cancel();
+          }
+          surface.style.removeProperty('will-change');
+        };
+
+        const animateCamera = (target, immediate = false, complete = () => {}) => {
+          const start = currentCamera();
+          cancelZoom();
+          // Paint a camera containing both endpoints so zoom-in never exposes
+          // clipped/blank margins. Only the HTML transform changes mid-zoom.
+          if (immediate || reducedMotion.matches || !validCamera(start) || sameCamera(start, target) || typeof surface.animate !== 'function') {
+            setCamera(target);
+            complete();
+            return;
+          }
+          const left = Math.min(start[0], target[0]);
+          const top = Math.min(start[1], target[1]);
+          const render = [left, top,
+            Math.max(start[0] + start[2], target[0] + target[2]) - left,
+            Math.max(start[1] + start[3], target[1] + target[3]) - top];
+          const first = cameraTransform(start, render);
+          const last = cameraTransform(target, render);
+          const transform = (matrix) => `translate(${matrix.translateXPercent}%, ${matrix.translateYPercent}%) scale(${matrix.scaleX}, ${matrix.scaleY})`;
+          setCamera(render);
+          surface.style.setProperty('will-change', 'transform');
+          const animation = surface.animate([
+            { transform: transform(first) },
+            { transform: transform(last) },
+          ], { duration: 360, easing: 'ease-in-out', fill: 'both' });
+          const active = { animation, start, target, render, first, last, svg };
+          motion = active;
+          animation.finished.then(() => {
+            if (motion !== active || svg !== active.svg) return;
+            motion = null;
+            // Commit the final SVG camera and clear its temporary HTML scale in
+            // one task, restoring crisp geometry and fixed-pixel stroke widths.
+            setCamera(target);
+            animation.cancel();
+            surface.style.removeProperty('will-change');
+            complete();
+          }, () => {}); // Cancellation is expected on rapid clicks/city changes.
+        };
+
+        function elevationColors(bands) {
+          const numeric = (value) => value !== undefined && value !== null && value !== '' && Number.isFinite(Number(value)) ? Number(value) : null;
+          const complete = ['normalized', 'min', 'max'].map((key) => bands.map((band) => numeric(band[key])))
+            .filter((values) => values.every((value) => value !== null));
+          const values = complete.find((candidate) => Math.max(...candidate) > Math.min(...candidate))
+            ?? complete[0] ?? bands.map((_band, index) => index);
+          if (!values.length) return [];
+          const minimum = Math.min(...values);
+          const range = Math.max(...values) - minimum;
+          return values.map((value) => {
+            const amount = range > 0 ? (value - minimum) / range : 0;
+            const shade = Number((255 - 85 * amount).toFixed(4));
+            return `rgb(${shade}, ${shade}, ${shade})`;
+          });
+        }
+
+        // Rescale the actual bands so every city's lowest terrain starts at pure white.
+        const styleElevation = () => {
+          const bands = [...svg.querySelectorAll('.elevation-band')];
+          const colors = elevationColors(bands.map((band) => ({
+            normalized: band.dataset.elevationNormalized,
+            min: band.dataset.elevationMin,
+            max: band.dataset.elevationMax,
+          })));
+          bands.forEach((band, index) => {
+            band.style.setProperty('--elevation-color', colors[index]);
+          });
+        };
+
+        const showAdditionalSources = () => {
+          additionalSources.replaceChildren();
+          const names = new Set();
+          (config.sources ?? []).forEach((source) => {
+            const name = typeof source === 'string' ? source : source?.name;
+            if (!name || /Overture|OpenStreetMap|USGS/i.test(name) || names.has(name)) return;
+            names.add(name);
+            additionalSources.append(' ');
+            const url = typeof source === 'object' ? source.url : null;
+            if (url && /^https?:\/\//i.test(url)) {
+              const link = document.createElement('a');
+              link.href = url;
+              link.textContent = name;
+              additionalSources.append(link);
+            } else {
+              additionalSources.append(name);
+            }
+            additionalSources.append('.');
+          });
+        };
+
+        const showStage = (nextStage, immediate = false) => {
+          if (!svg || !config) return;
+          const target = config.cameras[nextStage];
+          if (!validCamera(target)) throw new Error(`Stage ${nextStage} has no valid camera.`);
+          stage = nextStage;
+          map.classList.toggle('instant', immediate);
+          const activeSvg = svg;
+          const layers = [...svg.querySelectorAll('[data-reveal-stage]')];
+          // Hide unwanted layers immediately on zoom-in. Newly revealed layers
+          // stay hidden until the zoom finishes, avoiding paint during motion.
+          layers.forEach((layer) => {
+            if (Number(layer.dataset.revealStage) > stage) {
+              layer.classList.remove('visible');
+              layer.style.setProperty('visibility', 'hidden');
+            }
+          });
+          animateCamera(target, immediate, () => {
+            if (svg !== activeSvg || stage !== nextStage) return;
+            layers.forEach((layer) => {
+              const visible = Number(layer.dataset.revealStage) <= stage;
+              if (visible) layer.style.removeProperty('visibility');
+              layer.classList.toggle('visible', visible);
+            });
+          });
+          buttons.forEach((button) => button.setAttribute('aria-pressed', String(Number(button.dataset.stage) === stage)));
+          const label = templates.get(selector.value).dataset.label;
+          status.textContent = `${label} · Stage ${stage} of 5`;
+          status.dataset.error = 'false';
+          map.setAttribute('aria-label', `${label} map, stage ${stage} of 5`);
+          if (immediate) requestAnimationFrame(() => map.classList.remove('instant'));
+        };
+
+        const showError = (error) => {
+          cancelZoom();
+          status.textContent = `Unable to display this map: ${error.message}`;
+          status.dataset.error = 'true';
+          map.setAttribute('aria-busy', 'false');
+          buttons.forEach((button) => button.disabled = true);
+          console.error(error);
+        };
+
+        const showCity = async (id, initial = false) => {
+          const latest = ++request;
+          const previousCamera = currentCamera();
+          cancelZoom();
+          status.textContent = 'Loading map…';
+          status.dataset.error = 'false';
+          map.setAttribute('aria-busy', 'true');
+          buttons.forEach((button) => button.disabled = true);
+          // Give the loading state a frame before cloning the city's geometry.
+          await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+          if (latest !== request) return;
+          try {
+            const template = templates.get(id);
+            if (!template) throw new Error('This city has no embedded SVG.');
+            const nextSvg = template.content.querySelector('svg')?.cloneNode(true);
+            if (!nextSvg) throw new Error('This city has no map geometry.');
+            const metadata = nextSvg.querySelector('metadata');
+            const nextConfig = JSON.parse(metadata?.textContent ?? '{}');
+            for (let number = 1; number <= 5; number += 1) {
+              if (!validCamera(nextConfig.cameras?.[number])) throw new Error(`Stage ${number} has no valid camera.`);
+            }
+            svg = nextSvg;
+            config = nextConfig;
+            if (validCamera(previousCamera)) setCamera(previousCamera);
+            surface.replaceChildren(svg);
+            styleElevation();
+            showAdditionalSources();
+            showStage(stage, initial);
+            map.setAttribute('aria-busy', 'false');
+            buttons.forEach((button) => button.disabled = false);
+          } catch (error) {
+            showError(error);
+          }
+        };
+
+        selector.addEventListener('change', () => showCity(selector.value));
+        buttons.forEach((button) => button.addEventListener('click', () => {
+          try { showStage(Number(button.dataset.stage)); } catch (error) { showError(error); }
+        }));
+        selector.value = templates.has('nyc') ? 'nyc' : selector.options[0]?.value;
+        showCity(selector.value, true);
+      })();
+    </script>
+  </body>
+</html>

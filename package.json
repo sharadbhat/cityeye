@@ -1,0 +1,33 @@
+{
+  "name": "cityeye",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "generate:world": "node scripts/generate-world-cities.mjs",
+    "catalog": "node scripts/build-city-catalog.mjs",
+    "prepare:app": "node scripts/prepare-app.mjs",
+    "predev": "npm run prepare:app",
+    "dev": "vite --host 127.0.0.1",
+    "prebuild": "npm run prepare:app",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "start": "node scripts/preview.mjs",
+    "test": "node --test scripts/*.test.mjs",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+  },
+  "dependencies": {
+    "canvas-confetti": "1.9.4",
+    "gh-pages": "^6.3.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.1",
+    "vite": "8.3.2"
+  }
+}

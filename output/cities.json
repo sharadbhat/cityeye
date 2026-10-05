@@ -1,0 +1,366 @@
+{
+  "generatedAt": "2026-10-04T02:03:44.915Z",
+  "cities": [
+    {
+      "id": "nyc",
+      "label": "New York City",
+      "file": "nyc-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 40.7128,
+        "longitude": -74.006
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 8705457,
+      "parks": 1044,
+      "transit": 3213,
+      "waterAreas": 91,
+      "waterLines": 436,
+      "elevationBands": 8,
+      "seconds": 17
+    },
+    {
+      "id": "sf",
+      "label": "San Francisco",
+      "file": "sf-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 37.789,
+        "longitude": -122.401
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 4038462,
+      "parks": 503,
+      "transit": 677,
+      "waterAreas": 57,
+      "waterLines": 30,
+      "elevationBands": 8,
+      "seconds": 7
+    },
+    {
+      "id": "seattle",
+      "label": "Seattle",
+      "file": "seattle-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 47.6062,
+        "longitude": -122.3321
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 3899879,
+      "parks": 863,
+      "transit": 275,
+      "waterAreas": 54,
+      "waterLines": 63,
+      "elevationBands": 8,
+      "seconds": 11
+    },
+    {
+      "id": "portland",
+      "label": "Portland, Oregon",
+      "file": "portland-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 45.5189,
+        "longitude": -122.6793
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 4170095,
+      "parks": 701,
+      "transit": 323,
+      "waterAreas": 67,
+      "waterLines": 119,
+      "elevationBands": 8,
+      "seconds": 9
+    },
+    {
+      "id": "dallas",
+      "label": "Dallas",
+      "file": "dallas-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 32.7802,
+        "longitude": -96.8005
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 4489612,
+      "parks": 890,
+      "transit": 357,
+      "waterAreas": 78,
+      "waterLines": 99,
+      "elevationBands": 8,
+      "seconds": 11
+    },
+    {
+      "id": "austin",
+      "label": "Austin",
+      "file": "austin-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 30.2672,
+        "longitude": -97.7431
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 2540823,
+      "parks": 585,
+      "transit": 11,
+      "waterAreas": 36,
+      "waterLines": 27,
+      "elevationBands": 8,
+      "seconds": 7
+    },
+    {
+      "id": "houston",
+      "label": "Houston",
+      "file": "houston-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 29.7604,
+        "longitude": -95.3698
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 4997557,
+      "parks": 711,
+      "transit": 139,
+      "waterAreas": 82,
+      "waterLines": 182,
+      "elevationBands": 8,
+      "seconds": 11
+    },
+    {
+      "id": "provo",
+      "label": "Provo",
+      "file": "provo-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 40.2338,
+        "longitude": -111.6585
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 1528910,
+      "parks": 367,
+      "transit": 19,
+      "waterAreas": 13,
+      "waterLines": 106,
+      "elevationBands": 8,
+      "seconds": 4
+    },
+    {
+      "id": "nashville",
+      "label": "Nashville",
+      "file": "nashville-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 36.1627,
+        "longitude": -86.7816
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 2583142,
+      "parks": 216,
+      "transit": 8,
+      "waterAreas": 47,
+      "waterLines": 51,
+      "elevationBands": 8,
+      "seconds": 6
+    },
+    {
+      "id": "miami",
+      "label": "Miami",
+      "file": "miami-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 25.7743,
+        "longitude": -80.1937
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 3155301,
+      "parks": 386,
+      "transit": 215,
+      "waterAreas": 209,
+      "waterLines": 15,
+      "elevationBands": 8,
+      "seconds": 8
+    },
+    {
+      "id": "la",
+      "label": "Los Angeles",
+      "file": "la-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 34.0522,
+        "longitude": -118.2437
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 5258476,
+      "parks": 759,
+      "transit": 599,
+      "waterAreas": 45,
+      "waterLines": 19,
+      "elevationBands": 8,
+      "seconds": 14
+    },
+    {
+      "id": "denver",
+      "label": "Denver",
+      "file": "denver-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 39.7452,
+        "longitude": -104.9921
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 4616884,
+      "parks": 1195,
+      "transit": 300,
+      "waterAreas": 123,
+      "waterLines": 24,
+      "elevationBands": 8,
+      "seconds": 14
+    },
+    {
+      "id": "boston",
+      "label": "Boston",
+      "file": "boston-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 42.3601,
+        "longitude": -71.0589
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 7821223,
+      "parks": 743,
+      "transit": 607,
+      "waterAreas": 187,
+      "waterLines": 466,
+      "elevationBands": 8,
+      "seconds": 11
+    },
+    {
+      "id": "philly",
+      "label": "Philadelphia",
+      "file": "philly-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 39.9526,
+        "longitude": -75.1636
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 5453122,
+      "parks": 837,
+      "transit": 936,
+      "waterAreas": 77,
+      "waterLines": 252,
+      "elevationBands": 8,
+      "seconds": 11
+    },
+    {
+      "id": "chicago",
+      "label": "Chicago",
+      "file": "chicago-city-layered.svg",
+      "country": "United States",
+      "center": {
+        "latitude": 41.8832,
+        "longitude": -87.6324
+      },
+      "radiiMeters": [
+        2500,
+        6500,
+        15000,
+        30000
+      ],
+      "release": "2026-09-23.1",
+      "bytes": 5570325,
+      "parks": 1029,
+      "transit": 1032,
+      "waterAreas": 70,
+      "waterLines": 86,
+      "elevationBands": 8,
+      "seconds": 11
+    }
+  ],
+  "failures": []
+}
