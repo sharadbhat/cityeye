@@ -65,17 +65,25 @@ preview, and production bind to loopback by default; nothing is published.
 
 Run `npm run build`, then deploy **the contents of `dist/`** to GitHub Pages.
 No API, Node runtime, database, or server-side city catalog is needed on the
-host. Vite uses a relative `base: './'`, so scripts, maps, data, fonts, and
-the home link work under `/guess-the/` as well as a custom-domain root.
+host. Vite uses `base: '/cityeye/'` for the repository's Pages URL,
+`https://sharadbhat.github.io/cityeye/`. Scripts, maps, data, fonts, and the
+home link use that prefix. A custom-domain root would require a different base.
 Do not deploy `output/`, `data/`, or the repository source as the website.
 If using a build workflow, the checkout needs the generated source SVGs and
 catalog before `npm run build`; alternatively publish an already-built `dist/`
 artifact. Build-time generation still uses Node and geographic downloads;
 playing the deployed game does not.
 
+`.github/workflows/deploy.yml` runs on pushes to `main` and can also be started
+manually from Actions. It sets up Node.js 22, installs dependencies, generates
+the filtered city directory, builds the website, and uploads/deploys `dist/`
+using GitHub's official Pages actions. It does not push a `gh-pages` branch.
+In repository Settings → Pages → Build and deployment, select **GitHub Actions**
+as the Source before running this workflow. Commit/push the workflow change;
+local edits alone do not start a GitHub deployment.
+
 The official deployment instructions are at
 [Vite: GitHub Pages](https://vite.dev/guide/static-deploy.html#github-pages).
-This task prepares the static build; it does not publish to GitHub.
 
 Only one SVG is fetched and mounted per round. React manages game state;
 `CityMap` owns the inline SVG and its compositor-based camera transition.
