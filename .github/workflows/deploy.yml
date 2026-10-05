@@ -9,6 +9,8 @@ jobs:
   deploy:
     name: Deploy site to gh-pages
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: "Checkout"
