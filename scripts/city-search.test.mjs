@@ -55,6 +55,8 @@ test('the generated worldwide catalog contains broad coverage and recognizes com
   assert.ok(index.catalog.cities.length > 5_000);
   assert.ok(new Set(index.catalog.cities.map((city) => city.countryCode)).size > 150);
   assert.equal(index.catalog.source.minimumPopulation, 100_000);
+  assert.equal(index.catalog.source.name, 'GeoNames cities15000');
+  assert.equal(index.catalog.source.url, 'https://download.geonames.org/export/dump/cities15000.zip');
   assert.ok(index.catalog.cities.every((city) => city.population >= 100_000));
   assert.equal(index.catalog.source.license, 'CC BY 4.0');
   assert.equal(index.search('São Paulo')[0].id, 3448439);

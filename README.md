@@ -37,6 +37,10 @@ fresh data. Generated global data and copied app maps are excluded from Git.
 from the global guess directory. Suggestions require a recorded population
 of at least 100,000, including administrative seats. The current catalog has
 5,850 cities across 171 countries/territories; counts can change on refresh.
+The source is GeoNames' `cities15000` export, the closest available city export
+below our threshold. `parseCityRecords` applies the 100,000-person cutoff during
+catalog generation, before writing JSON or preparing the website's search index.
+Smaller cities and capitals are not included in the published directory.
 The cutoff is defined by `MIN_CITY_POPULATION` in `scripts/build-city-catalog.mjs`.
 After rebuilding the catalog, run `npm run prepare:app` and refresh the browser
 to load the newly prepared static data.
@@ -258,7 +262,7 @@ links are also recorded in SVG metadata.
 
 City names and alternate names: [GeoNames](https://www.geonames.org/),
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The directory is
-derived from the [cities500 export](https://download.geonames.org/export/dump/readme.txt),
+derived from the [cities15000 export](https://download.geonames.org/export/dump/readme.txt),
 filtered to cities with a recorded population of at least 100,000 and excluding
 neighborhood, historical, and abandoned feature codes. Population refers to
 the GeoNames record, not a metro-area population; unknown populations are excluded.

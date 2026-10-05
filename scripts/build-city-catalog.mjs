@@ -142,16 +142,16 @@ async function atomicWrite(file, content) {
 
 export async function buildCityCatalog({ cacheDirectory = join(ROOT, 'output/source/geonames'), outputDirectory = join(ROOT, 'data'), refresh = false } = {}) {
   const [zip, countriesText, regionsText] = await Promise.all([
-    cachedDownload('cities500.zip', cacheDirectory, refresh),
+    cachedDownload('cities15000.zip', cacheDirectory, refresh),
     cachedDownload('countryInfo.txt', cacheDirectory, refresh),
     cachedDownload('admin1CodesASCII.txt', cacheDirectory, refresh),
   ]);
-  const { cities, omitted, omittedPopulationCount } = parseCityRecords(extractZipEntry(zip, 'cities500.txt'), parseCountries(countriesText.toString('utf8')), parseRegions(regionsText.toString('utf8')));
+  const { cities, omitted, omittedPopulationCount } = parseCityRecords(extractZipEntry(zip, 'cities15000.txt'), parseCountries(countriesText.toString('utf8')), parseRegions(regionsText.toString('utf8')));
   const catalog = {
     version: 1,
     generatedAt: new Date().toISOString(),
     source: {
-      name: 'GeoNames cities500', url: `${SOURCE}cities500.zip`,
+      name: 'GeoNames cities15000', url: `${SOURCE}cities15000.zip`,
       attribution: 'GeoNames', attributionUrl: 'https://www.geonames.org/',
       license: 'CC BY 4.0', licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
       minimumPopulation: MIN_CITY_POPULATION,

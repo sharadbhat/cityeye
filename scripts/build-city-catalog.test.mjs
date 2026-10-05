@@ -39,7 +39,7 @@ test('invalid coordinates and unknown country metadata fail before producing a c
 });
 
 function zipFixture() {
-  const filename = Buffer.from('cities500.txt');
+  const filename = Buffer.from('cities15000.txt');
   const content = Buffer.from('123456789');
   const compressed = deflateRawSync(content);
   const header = Buffer.alloc(30);
@@ -70,10 +70,10 @@ function zipFixture() {
 
 test('built-in ZIP extraction verifies the expected filename and archive checksum', () => {
   const zip = zipFixture();
-  assert.equal(extractZipEntry(zip, 'cities500.txt'), '123456789');
+  assert.equal(extractZipEntry(zip, 'cities15000.txt'), '123456789');
   assert.throws(() => extractZipEntry(zip, 'different.txt'), /does not contain/);
   const corrupted = Buffer.from(zip);
   const directory = corrupted.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]));
   corrupted.writeUInt32LE(0, directory + 16);
-  assert.throws(() => extractZipEntry(corrupted, 'cities500.txt'), /checksum/);
+  assert.throws(() => extractZipEntry(corrupted, 'cities15000.txt'), /checksum/);
 });
