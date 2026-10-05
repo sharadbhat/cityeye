@@ -3,6 +3,8 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { CITIES, ORIGINAL_CITY_IDS } from './cities.mjs';
 import { WORLD_CITIES } from './world-cities.mjs';
+import CITY_EXPANSION from '../data/world-city-expansion.json' with { type: 'json' };
+import { continentForCity } from '../src/lib/city-clues.mjs';
 import { createSearchIndex, normalizeCityQuery } from '../src/lib/city-search.mjs';
 import { loadPlayableCities, PLAYABLE_GEO_NAMES } from './playable-cities.mjs';
 
@@ -84,13 +86,42 @@ test('all 16 playable maps match verified global city IDs and curated short name
   assert.throws(() => loadPlayableCities(wrongRegion, { portland: CITIES.portland }), /verification/);
 });
 
-test('the 42 worldwide city identities match catalog names, countries, regions and downtown coordinates', async () => {
+test('the 349 worldwide city identities match catalog names, countries, regions and map coordinates', async () => {
   const index = await globalSearch();
   const cities = loadPlayableCities(index.catalog, WORLD_CITIES);
-  assert.equal(cities.length, 42);
-  assert.equal(new Set(cities.map(city => city.id)).size, 42);
+  assert.equal(cities.length, 349);
+  assert.equal(new Set(cities.map(city => city.id)).size, 349);
   for (const city of cities) {
     assert.ok(index.search(city.name, 20).some(record => record.id === city.id), city.label);
     assert.ok(index.get(city.id).population >= 100_000);
   }
+});
+
+test('the complete configured pool contains exactly 365 distinct eligible city identities', async () => {
+  const index = await globalSearch();
+  const cities = loadPlayableCities(index.catalog, CITIES);
+  assert.equal(cities.length, 365);
+  assert.equal(new Set(cities.map(city => city.id)).size, 365);
+  assert.ok(cities.every(city => index.get(city.id).population >= 100_000));
+});
+
+test('the 265 additions have stable unique keys, verified identities and coverage across six continents', async () => {
+  const index = await globalSearch();
+  assert.equal(CITY_EXPANSION.length, 265);
+  assert.equal(new Set(CITY_EXPANSION.map(city => city.key)).size, 265);
+  assert.equal(new Set(CITY_EXPANSION.map(city => city.id)).size, 265);
+  const distribution = {};
+  for (const city of CITY_EXPANSION) {
+    assert.match(city.key, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    const record = index.get(city.id);
+    assert.equal(record.name, city.name);
+    assert.equal(record.region, city.region);
+    assert.equal(record.countryCode, city.countryCode);
+    assert.ok(!ORIGINAL_CITY_IDS.includes(city.key));
+    const continent = continentForCity(city);
+    distribution[continent] = (distribution[continent] ?? 0) + 1;
+  }
+  assert.deepEqual(distribution, { 'North America': 50, Europe: 75, Asia: 70, Africa: 35, 'South America': 25, Oceania: 10 });
+  assert.equal(WORLD_CITIES['san-jose-us'].geoNames.id, 5392171);
+  assert.equal(WORLD_CITIES['san-jose-cr'].geoNames.id, 3621849);
 });

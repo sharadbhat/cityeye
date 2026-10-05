@@ -5,7 +5,8 @@ import { PLAYABLE_GEO_NAMES } from './playable-cities.mjs';
 import { continentForCity, geographyClue } from '../src/lib/city-clues.mjs';
 import { applyRevealStages, STAGE_HINTS } from '../src/lib/reveal-stages.mjs';
 
-test('all 58 configured cities have a supported continent clue', () => {
+test('all 365 configured cities have a supported continent clue', () => {
+  assert.equal(Object.keys(CITIES).length, 365);
   for (const key of Object.keys(CITIES)) {
     const identity = PLAYABLE_GEO_NAMES[key];
     assert.ok(continentForCity({ ...identity, countryCode: identity.countryCode ?? 'US' }));
@@ -17,6 +18,13 @@ test('continents use city-level exceptions for transcontinental countries', () =
   assert.equal(continentForCity({ geonameId: 745044, countryCode: 'TR' }), 'Europe / Asia');
   assert.equal(continentForCity({ countryCode: 'PA' }), 'North America');
   assert.equal(continentForCity({ countryCode: 'NZ' }), 'Oceania');
+  assert.equal(continentForCity({ id: 498817, countryCode: 'RU' }), 'Europe');
+  assert.equal(continentForCity({ id: 323786, countryCode: 'TR' }), 'Asia');
+  assert.equal(continentForCity({ id: 311046, countryCode: 'TR' }), 'Asia');
+  assert.equal(continentForCity({ id: 323777, countryCode: 'TR' }), 'Asia');
+  assert.equal(continentForCity({ id: 1526273, countryCode: 'KZ' }), 'Asia');
+  assert.equal(continentForCity({ id: 611717, countryCode: 'GE' }), 'Asia');
+  assert.equal(continentForCity({ id: 587084, countryCode: 'AZ' }), 'Asia');
   assert.throws(() => continentForCity({ id: 1, countryCode: 'RU' }), /No verified continent/);
   assert.throws(() => continentForCity({ countryCode: 'constructor' }), /No verified continent/);
 });

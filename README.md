@@ -114,7 +114,7 @@ offline review page with a city selector and five stage buttons.
 Requires Node.js and `uv`/`uvx`. The downloader uses the official `overturemaps`
 Python package through `uvx`; the SVG generation code is JavaScript.
 
-### Unattended worldwide batch (42 new cities)
+### Unattended worldwide batch (365-city pool)
 
 From the repository root, run:
 
@@ -122,9 +122,14 @@ From the repository root, run:
 npm run generate:world
 ```
 
-Leave the terminal open and keep the computer awake. This generates all 42
-international cities in `scripts/world-cities.mjs`, one at a time to limit
-memory use. It needs internet access and disk space for the geographic source
+Leave the terminal open and keep the computer awake. This checks all 349
+worldwide batch cities in `scripts/world-cities.mjs`, one at a time to limit
+memory use. With the existing 100 maps, it skips the 84 previously generated
+worldwide maps, retains the original 16 US maps, and generates 265 additions
+for a total of 365. The startup summary distinguishes the total city pool from
+the batch progress denominator (349); the dry run shows skip/generate counts.
+No existing valid maps need to be regenerated.
+It needs internet access and disk space for the geographic source
 caches; large cities can take a while. No accounts, API keys, or interactive
 prompts are required. Node.js, `uvx`, and the app's npm dependencies must already
 be installed (`npm install`); `uvx` automatically prepares the pinned Python
@@ -132,7 +137,7 @@ downloader on first use.
 
 The runner:
 
-- Checks all 42 GeoNames identities against the 100,000-population catalog.
+- Checks all 349 batch GeoNames identities against the 100,000-population catalog.
 - Prepares a missing city catalog automatically and retries transient setup and
   publication errors. A completed batch can be republished without new downloads.
 - Retries each failed city up to three times with backoff; continues to the next
@@ -148,7 +153,27 @@ The runner:
 - Prevents two batches from writing the same outputs at once.
 - Publishes only valid generated maps, copies SVGs into the React app before
   registering their playable identities, and builds `dist/` automatically. The existing
-  16 cities remain available; a fully successful batch adds 42, for 58 total.
+  100 cities remain available; a fully successful batch adds 265, for 365 total.
+
+The 265 additions are fixed in `data/world-city-expansion.json`, including
+city keys, labels, GeoNames IDs, country/region identities, and map centers.
+They are not reselected from a population ranking on each run. Every configured
+answer is eligible in the same 100,000+ population suggestion directory.
+The additions are distributed as follows:
+
+- North America: 50, including Phoenix, Detroit, Ottawa, Monterrey, Kingston.
+- Europe: 75, including Edinburgh, Lyon, Milan, Brussels, Kyiv, Reykjavík.
+- Asia: 70, including Kyoto, Guangzhou, Chennai, Lahore, Tashkent, Ulaanbaatar.
+- Africa: 35, including Alexandria, Durban, Kigali, Luanda, Kinshasa.
+- South America: 25, including Brasília, Recife, Córdoba, Cusco, La Paz.
+- Oceania: 10, including Adelaide, Christchurch, Port Moresby.
+
+The expanded pool is configured immediately, but new answers become playable
+only after their maps are successfully generated and published. If an older
+batch is still running when the list is expanded, let it finish, then rerun the
+command: a running process keeps its original list. Do not run a second batch
+concurrently. For GitHub Pages, commit the new `output/*-city-layered.svg` source
+maps and configuration changes; deploying the code alone does not generate maps.
 
 Outputs are `output/<city>-city-layered.svg`,
 `output/world-generation-report.json`, and per-city logs under
@@ -168,13 +193,14 @@ forwarding differences):
 node scripts/generate-world-cities.mjs --dry-run
 node scripts/generate-world-cities.mjs --jobs 2
 node scripts/generate-world-cities.mjs --cities london,paris
+node scripts/generate-world-cities.mjs --cities phoenix,kyoto,adelaide
 node scripts/generate-world-cities.mjs --attempts 5 --timeout-minutes 60
 node scripts/generate-world-cities.mjs --force
 ```
 
 The dataset release and Python package version are pinned in
 `scripts/map-source.mjs`. If an old release is removed by Overture, the runner
-fails its preflight before attempting all 42 cities; update that file to a
+fails its preflight before attempting the batch; update that file to a
 supported release before rerunning. The offline HTML preview is separate: after
 generation, use `node scripts/build-city-preview.mjs --cities all` to rebuild it.
 

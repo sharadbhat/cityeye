@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as pause } from 'node:timers/promises';
 import { WORLD_CITIES, WORLD_CITY_IDS } from './world-cities.mjs';
+import { CITIES, ORIGINAL_CITY_IDS } from './cities.mjs';
 import { runProcess } from './run-process.mjs';
 import { acquireBatchLock, atomicJson, runCityBatch } from './city-batch.mjs';
 import { validateCitySvg } from './validate-city-maps.mjs';
@@ -13,6 +14,10 @@ import { OVERTURE_RELEASE, OVERTURE_PACKAGE } from './map-source.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const outputDirectory = join(root, 'output');
+
+export function cityPoolSummary(selectedCount = WORLD_CITY_IDS.length, force = false) {
+  return `City pool: ${Object.keys(CITIES).length} configured (${ORIGINAL_CITY_IDS.length} original + ${WORLD_CITY_IDS.length} worldwide batch). Checking ${selectedCount} batch entries; ${force ? 'all selected maps will be regenerated' : 'valid maps will be skipped'}.`;
+}
 
 export async function retrySetup(operation, { signal, attempts = 3, delay = attempt => pause(attempt * 2_000, undefined, { signal }), log = console.warn } = {}) {
   for (let attempt = 1; ; attempt++) {
@@ -59,7 +64,7 @@ export async function generationFingerprints(ids) {
 async function main() {
   const options = parseWorldArguments(process.argv.slice(2));
   if (options.help) {
-    console.log('Usage: npm run generate:world -- [--jobs 1|2] [--attempts 1..5] [--timeout-minutes 45] [--cities london,paris] [--force] [--dry-run]\nDefault: all 42 cities; resumes valid outputs; publishes successful maps and builds the app.');
+    console.log(`Usage: npm run generate:world -- [--jobs 1|2] [--attempts 1..5] [--timeout-minutes 45] [--cities london,paris] [--force] [--dry-run]\n${cityPoolSummary()}\nRetains the original US maps, publishes successful maps and builds the app.`);
     return;
   }
   const catalogPath = join(root, 'data', 'city-catalog.json');
@@ -74,6 +79,7 @@ async function main() {
   }
   const catalog = JSON.parse(catalogText);
   loadPlayableCities(catalog, Object.fromEntries(options.ids.map(id => [id, WORLD_CITIES[id]])));
+  console.log(cityPoolSummary(options.ids.length, options.force));
   const fingerprints = await generationFingerprints(options.ids);
   const inspect = async (id) => {
     let svg;
@@ -85,8 +91,13 @@ async function main() {
     return { file: validation.file, metrics: validation.metrics, warnings: validation.warnings, fingerprint };
   };
   if (options.dryRun) {
-    for (const id of options.ids) console.log(`${!options.force && await inspect(id) ? 'SKIP' : 'GENERATE'} ${id}: ${WORLD_CITIES[id].label}, ${WORLD_CITIES[id].country}`);
-    console.log(`Dry run: ${options.ids.length} verified identities; no downloads or file changes. Release ${OVERTURE_RELEASE}; ${OVERTURE_PACKAGE}.`);
+    let skipped = 0;
+    for (const id of options.ids) {
+      const reuse = !options.force && await inspect(id);
+      if (reuse) skipped++;
+      console.log(`${reuse ? 'SKIP' : 'GENERATE'} ${id}: ${WORLD_CITIES[id].label}, ${WORLD_CITIES[id].country}`);
+    }
+    console.log(`Dry run: ${options.ids.length} verified identities; ${skipped} existing maps skipped, ${options.ids.length - skipped} to generate; no downloads or file changes. Release ${OVERTURE_RELEASE}; ${OVERTURE_PACKAGE}.`);
     return;
   }
   await stat(join(root, 'node_modules', 'vite', 'bin', 'vite.js')).catch(() => { throw new Error('Run npm install first.'); });
@@ -109,7 +120,7 @@ async function main() {
     if (needsGeneration) {
       console.log(`Preparing ${OVERTURE_PACKAGE} (uvx installs/caches it automatically).`);
       await retrySetup(() => runProcess('uvx', ['--from', OVERTURE_PACKAGE, 'python', '-c', 'from overturemaps.core import record_batch_reader; from overturemaps.writers import get_writer, copy; print("Downloader ready")'], { cwd: root, logPath: setupLog, timeoutMs: 10 * 60_000, signal: controller.signal }), { signal: controller.signal });
-      // Catch expired release URLs up front, rather than retrying all 42 cities.
+      // Catch expired release URLs before starting the city batch.
       const prefix = `release/${OVERTURE_RELEASE}/theme=transportation/type=segment/`;
       await retrySetup(async () => {
         const response = await fetch(`https://overturemaps-us-west-2.s3.us-west-2.amazonaws.com/?list-type=2&max-keys=1&prefix=${encodeURIComponent(prefix)}`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(60_000)]) });

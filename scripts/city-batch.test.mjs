@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { acquireBatchLock, runCityBatch } from './city-batch.mjs';
-import { parseWorldArguments, generationFingerprints, retrySetup } from './generate-world-cities.mjs';
+import { parseWorldArguments, generationFingerprints, retrySetup, cityPoolSummary } from './generate-world-cities.mjs';
 import { WORLD_CITY_IDS } from './world-cities.mjs';
 import { runProcess } from './run-process.mjs';
 import { availableCityMaps } from './available-city-maps.mjs';
@@ -29,15 +29,23 @@ test('setup/publication transient errors are retried without user intervention',
   await assert.rejects(retrySetup(async () => { throw new Error('Permanent'); }, { attempts: 2, delay: async () => {}, log: () => {} }), /Permanent/);
 });
 
-test('world batch defaults to all 42 cities and rejects invalid options', () => {
+test('world batch defaults to all 349 cities and rejects invalid options', () => {
   const options = parseWorldArguments([]);
   assert.deepEqual(options.ids, WORLD_CITY_IDS);
+  assert.equal(options.ids.length, 349);
   assert.equal(options.jobs, 1);
   assert.equal(options.attempts, 3);
   assert.equal(options.timeoutMinutes, 45);
   assert.deepEqual(parseWorldArguments(['--cities', 'london,paris,london', '--jobs', '2', '--dry-run']).ids, ['london', 'paris']);
+  assert.deepEqual(parseWorldArguments(['--cities', 'phoenix,kyoto,adelaide']).ids, ['phoenix', 'kyoto', 'adelaide']);
   assert.equal(parseWorldArguments(['--dry-run']).dryRun, true);
   for (const args of [['--jobs','0'], ['--jobs','3'], ['--cities',''], ['--cities','bogus'], ['--attempts','0'], ['--timeout-minutes','NaN'], ['--unknown']]) assert.throws(() => parseWorldArguments(args));
+});
+
+test('batch summary distinguishes the 365-city pool from the 349-entry batch', () => {
+  assert.equal(cityPoolSummary(), 'City pool: 365 configured (16 original + 349 worldwide batch). Checking 349 batch entries; valid maps will be skipped.');
+  assert.match(cityPoolSummary(2), /Checking 2 batch entries/);
+  assert.match(cityPoolSummary(2, true), /all selected maps will be regenerated/);
 });
 
 test('each city has a stable, distinct generation fingerprint', async () => {

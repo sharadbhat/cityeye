@@ -326,11 +326,11 @@ export default function App() {
                   aria-label="Previous attempts"
                 >
                   <h3>Attempts</h3>
-                  <ol>
-                    {round.guesses.map((guess, index) => (
-                      <li key={guess.skipped ? `skip-${index}` : guess.id}>
+                  <ol reversed>
+                    {[...round.guesses].reverse().map((guess, index) => (
+                      <li key={guess.skipped ? `skip-${round.guesses.length - index}` : guess.id}>
                         <span className="guess-number">
-                          {String(index + 1).padStart(2, "0")}
+                          {String(round.guesses.length - index).padStart(2, "0")}
                         </span>
                         <span className="guess-place">
                           {guess.skipped ? "Skipped" : guess.name}
