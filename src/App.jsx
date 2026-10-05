@@ -390,7 +390,7 @@ export default function App() {
                   onClick={handleGiveUp}
                   disabled={!mapReady || !!mapError}
                 >
-                  Reveal the city <span>↗</span>
+                  Reveal the city
                 </button>
               )}
             </aside>

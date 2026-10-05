@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { cityDirectory } from "../lib/city-directory.mjs";
+import { attachCitySearchDismissal, preserveSearchFocus } from "../lib/city-search-interaction.mjs";
 
 export function cityContext(city) {
   return [city.region, city.country].filter(Boolean).join(", ");
@@ -9,12 +10,15 @@ export default function CitySearch({ selected, onSelect, disabled, resetKey }) {
   const listId = useId();
   const inputId = useId();
   const input = useRef(null);
+  const searchRoot = useRef(null);
   const cache = useRef(new Map());
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState("idle");
+
+  useEffect(() => attachCitySearchDismissal(searchRoot.current, () => setOpen(false)), []);
 
   useEffect(() => {
     setQuery("");
@@ -94,12 +98,7 @@ export default function CitySearch({ selected, onSelect, disabled, resetKey }) {
   };
 
   return (
-    <div
-      className="city-search"
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
-      }}
-    >
+    <div className="city-search" ref={searchRoot}>
       <label htmlFor={inputId}>Which city is this?</label>
       <div className="search-input">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -167,8 +166,10 @@ export default function CitySearch({ selected, onSelect, disabled, resetKey }) {
                 role="option"
                 aria-selected={active === index}
                 className={active === index ? "active" : ""}
-                onPointerDown={(event) => event.preventDefault()}
-                onMouseEnter={() => setActive(index)}
+                onPointerDown={preserveSearchFocus}
+                onPointerEnter={(event) => {
+                  if (event.pointerType === "mouse") setActive(index);
+                }}
                 onClick={() => choose(city)}
               >
                 <span>{city.name}</span>
